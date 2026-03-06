@@ -1,0 +1,36 @@
+name: Build LaTeX PDF
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Normalizza encoding e rimuove eventuale BOM
+      - name: Normalize main.tex encoding
+        run: |
+          python - <<'PY'
+          import pathlib
+          p = pathlib.Path("main.tex")
+          b = p.read_bytes()
+          txt = b.decode("utf-8-sig")
+          p.write_text(txt, encoding="utf-8", newline="\n")
+          PY
+
+      - name: Compile LaTeX
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: main.tex
+          latexmk_use_lualatex: true
+
+      - name: Upload PDF
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-pdf
+          path: main.pdf
